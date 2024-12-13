@@ -21,6 +21,18 @@ httpServer.listen(wsPort, () => {
 // Handle client connections
 aedes.on('client', (client) => {
     console.log(`Client connected: ${client?.id}`);
+    
+    // Push a welcome message to the client on a specific topic
+    const welcomeTopic = 'welcome/topic';
+    const welcomeMessage = `Hello ${client?.id}, welcome to the MQTT broker!`;
+    
+    aedes.publish({
+        topic: welcomeTopic,
+        payload: welcomeMessage,
+        qos: 0,
+    }, () => {
+        console.log(`Welcome message sent to ${client?.id}`);
+    });
 });
 
 // Handle client disconnections
