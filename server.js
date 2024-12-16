@@ -18,32 +18,42 @@ httpServer.listen(wsPort, () => {
     console.log(`MQTT server is running on ws://localhost:${wsPort}`);
 });
 
-// Send welcome message to new client
-aedes.on('client', (client) => {
-    console.log(`Client connected: ${client.id}`);
+// Handle subscriptions and send welcome message
+aedes.on('subscribe', (subscriptions, client) => {
+    if (client) {
+        console.log(`Client ${client.id} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ')}`);
 
-    const welcomeTopic = `welcome/${client.id}`;
-    const welcomeMessage = `Hello ${client.id}, welcome to the MQTT broker!`;
+        // Check if the client subscribed to a specific topic
+        subscriptions.forEach((sub) => {
+            const subscribedTopic = sub.topic;
 
-    aedes.publish(
-        {
-            topic: welcomeTopic,   // Send the welcome message on a personalized topic
-            payload: welcomeMessage,
-            qos: 1,                // At least once delivery
-            retain: false,         // Do not retain this message
-        },
-        client, // Send only to the connecting client
-        (err) => {
-            if (err) {
-                console.error(`Failed to send welcome message to ${client.id}:`, err);
-            } else {
-                console.log(`Welcome message sent to ${client.id} on topic ${welcomeTopic}`);
+            // Only send a welcome message if the topic matches (or send on any topic)
+            if (subscribedTopic === 'public/mqtt') {
+                const welcomeMessage = `Hello ${client.id}, you have subscribed to ${subscribedTopic}!`;
+
+                // Publish the welcome message only to the subscribing client
+                aedes.publish(
+                    {
+                        topic: subscribedTopic, // Use the subscribed topic
+                        payload: welcomeMessage,
+                        qos: 1,                // At least once delivery
+                        retain: false,         // Do not retain this message
+                    },
+                    client, // Send only to this client
+                    (err) => {
+                        if (err) {
+                            console.error(`Failed to send welcome message to ${client.id}:`, err);
+                        } else {
+                            console.log(`Welcome message sent to ${client.id} on topic ${subscribedTopic}`);
+                        }
+                    }
+                );
             }
-        }
-    );
+        });
+    }
 });
 
-// Prevent broadcast of client-published messages to other subscribers
+// Prevent broadcast of client-published messages
 aedes.on('publish', (packet, client) => {
     if (client) {
         console.log(`Message received from ${client.id}: ${packet.payload.toString()} on topic ${packet.topic}`);
@@ -51,7 +61,7 @@ aedes.on('publish', (packet, client) => {
         // Process the message (e.g., log or save to a database)
         saveToDatabase(client.id, packet.topic, packet.payload.toString());
 
-        // Do NOT broadcast the message to other subscribers
+        // Prevent broadcasting the message to other subscribers
         console.log(`Broadcasting of message on topic ${packet.topic} has been suppressed.`);
     }
 });
