@@ -18,45 +18,51 @@ httpServer.listen(wsPort, () => {
     console.log(`MQTT server is running on ws://localhost:${wsPort}`);
 });
 
-// Handle client connections
+// Send welcome message to new client
 aedes.on('client', (client) => {
-    console.log(`Client connected: ${client?.id}`);
-    
+    console.log(`Client connected: ${client.id}`);
+
+    const welcomeTopic = `welcome/${client.id}`;
+    const welcomeMessage = `Hello ${client.id}, welcome to the MQTT broker!`;
+
+    aedes.publish(
+        {
+            topic: welcomeTopic,   // Send the welcome message on a personalized topic
+            payload: welcomeMessage,
+            qos: 1,                // At least once delivery
+            retain: false,         // Do not retain this message
+        },
+        client, // Send only to the connecting client
+        (err) => {
+            if (err) {
+                console.error(`Failed to send welcome message to ${client.id}:`, err);
+            } else {
+                console.log(`Welcome message sent to ${client.id} on topic ${welcomeTopic}`);
+            }
+        }
+    );
 });
 
-aedes.on('subscribe', (subscriptions, client) => {
-    console.log(`Client ${client?.id} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ')}`);
+// Prevent broadcast of client-published messages to other subscribers
+aedes.on('publish', (packet, client) => {
+    if (client) {
+        console.log(`Message received from ${client.id}: ${packet.payload.toString()} on topic ${packet.topic}`);
+        
+        // Process the message (e.g., log or save to a database)
+        saveToDatabase(client.id, packet.topic, packet.payload.toString());
 
-    // Check if the subscription includes the target topic (e.g., 'public/mqtt')
-    const targetTopic = 'public/mqtt';
-    const isSubscribedToTarget = subscriptions.some(sub => sub.topic === targetTopic);
-
-    if (isSubscribedToTarget) {
-        const welcomeMessage = `Hello ${client?.id}, welcome to the MQTT broker!`;
-
-        // Publish the welcome message to the subscribed topic
-        aedes.publish({
-            topic: targetTopic,
-            payload: welcomeMessage,
-            qos: 1,        // At least once delivery
-            retain: false, // No need to retain the welcome message
-        }, (err) => {
-            if (err) {
-                console.error(`Failed to send welcome message to ${client?.id}:`, err);
-            } else {
-                console.log(`Welcome message sent to ${client?.id} on topic ${targetTopic}`);
-            }
-        });
+        // Do NOT broadcast the message to other subscribers
+        console.log(`Broadcasting of message on topic ${packet.topic} has been suppressed.`);
     }
 });
-
 
 // Handle client disconnections
 aedes.on('clientDisconnect', (client) => {
     console.log(`Client disconnected: ${client?.id}`);
 });
 
-// Handle messages published to the broker
-aedes.on('publish', (packet, client) => {
-    console.log(`Message published: ${packet.payload.toString()} on topic: ${packet.topic}`);
-});
+// Example function to process or store messages
+function saveToDatabase(clientId, topic, payload) {
+    console.log(`Saving to database: Client=${clientId}, Topic=${topic}, Payload=${payload}`);
+    // Add your database logic here
+}
