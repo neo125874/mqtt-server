@@ -22,18 +22,34 @@ httpServer.listen(wsPort, () => {
 aedes.on('client', (client) => {
     console.log(`Client connected: ${client?.id}`);
     
-    // Push a welcome message to the client on a specific topic
-    const welcomeTopic = 'public/mqtt';
-    const welcomeMessage = `Hello ${client?.id}, welcome to the MQTT broker!`;
-    
-    aedes.publish({
-        topic: welcomeTopic,
-        payload: welcomeMessage,
-        qos: 0,
-    }, () => {
-        console.log(`Welcome message sent to ${client?.id}`);
-    });
 });
+
+aedes.on('subscribe', (subscriptions, client) => {
+    console.log(`Client ${client?.id} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ')}`);
+
+    // Check if the subscription includes the target topic (e.g., 'public/mqtt')
+    const targetTopic = 'public/mqtt';
+    const isSubscribedToTarget = subscriptions.some(sub => sub.topic === targetTopic);
+
+    if (isSubscribedToTarget) {
+        const welcomeMessage = `Hello ${client?.id}, welcome to the MQTT broker!`;
+
+        // Publish the welcome message to the subscribed topic
+        aedes.publish({
+            topic: targetTopic,
+            payload: welcomeMessage,
+            qos: 1,        // At least once delivery
+            retain: false, // No need to retain the welcome message
+        }, (err) => {
+            if (err) {
+                console.error(`Failed to send welcome message to ${client?.id}:`, err);
+            } else {
+                console.log(`Welcome message sent to ${client?.id} on topic ${targetTopic}`);
+            }
+        });
+    }
+});
+
 
 // Handle client disconnections
 aedes.on('clientDisconnect', (client) => {
