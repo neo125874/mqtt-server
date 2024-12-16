@@ -28,7 +28,7 @@ aedes.on('subscribe', (subscriptions, client) => {
 
         aedes.publish(
             {
-                topic: `welcome/${client.id}`, // Dedicated welcome topic to avoid loopback
+                topic: `pulic/mqtt`, // Dedicated welcome topic to avoid loopback
                 payload: welcomeMessage,
                 qos: 1,                       // At least once delivery
                 retain: false,                // Do not retain this message
