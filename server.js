@@ -42,7 +42,7 @@ aedes.on('subscribe', (subscriptions, client) => {
 // Suppress self-published messages
 aedes.authorizeForward = (client, packet) => {
     // Block messages from being sent back to the same client
-    if (client && packet.topic === `mqtt/${client.id}`) {
+    if (!client && packet.topic === `mqtt/${client.id}`) {
         console.log(`Blocking self-published message from ${client.id} on topic ${packet.topic}`);
         return null; // Prevent forwarding to this client
     }
