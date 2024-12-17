@@ -18,44 +18,38 @@ httpServer.listen(wsPort, () => {
     console.log(`MQTT server is running on ws://localhost:${wsPort}`);
 });
 
-// Handle subscriptions and send a welcome message
-aedes.on('subscribe', (subscriptions, client) => {
-    if (client) {
-        const clientTopic = `mqtt/${client.id}`;
-        console.log(`Client ${client.id} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ')}`);
-
-        // Send welcome message ONLY to the client subscribing
-        const welcomeMessage = `Hello ${client.id}, welcome to your dedicated topic: ${clientTopic}`;
-        aedes.publish(
-            {
-                topic: clientTopic,
-                payload: welcomeMessage,
-                qos: 1,
-                retain: false
-            },
-            client, // Send only to this client
-            () => console.log(`Welcome message sent to ${client.id} on topic ${clientTopic}`)
-        );
-    }
-});
-
-// Suppress self-published messages
-aedes.authorizeForward = (client, packet) => {
-    // Block messages from being sent back to the same client
-    if (!client && packet.topic === `mqtt/${client.id}`) {
-        console.log(`Blocking self-published message from ${client.id} on topic ${packet.topic}`);
-        return null; // Prevent forwarding to this client
-    }
-    return packet; // Allow all other messages
-};
-
-// Intercept and process client-published messages
+// Handle incoming client messages on x-topic and send responses to y-topic
 aedes.on('publish', (packet, client) => {
     if (client) {
         console.log(`Message received from ${client.id}: ${packet.payload.toString()} on topic ${packet.topic}`);
 
-        saveToDatabase(client.id, packet.topic, packet.payload.toString());
+        // Extract client ID from the topic
+        const clientId = client.id;
+        const uniqueId = clientId.split('/')[1]
+
+        // Check if the topic is an input topic (mqtt/x/<client.id>)
+        if (packet.topic === `mqtt/y/${uniqueId}`) {
+            console.log(`Processing message from ${clientId}...`);
+
+            // Send response to the client's y-topic
+            const responseTopic = `mqtt/x/${uniqueId}`;
+            const responseMessage = `Hello ${uniqueId}, your message was received: ${packet.payload.toString()}`;
+
+            aedes.publish({
+                topic: responseTopic,
+                payload: responseMessage,
+                qos: 1,
+                retain: false
+            }, () => {
+                console.log(`Response sent to ${uniqueId} on topic ${responseTopic}`);
+            });
+        }
     }
+});
+
+// Handle client subscriptions
+aedes.on('subscribe', (subscriptions, client) => {
+    console.log(`Client ${client.id} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ')}`);
 });
 
 // Handle client disconnections
@@ -63,7 +57,3 @@ aedes.on('clientDisconnect', (client) => {
     console.log(`Client disconnected: ${client?.id}`);
 });
 
-function saveToDatabase(clientId, topic, payload) {
-    console.log(`Saving to database: Client=${clientId}, Topic=${topic}, Payload=${payload}`);
-    // Add your database logic here
-}
