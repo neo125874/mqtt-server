@@ -50,13 +50,21 @@ aedes.on('publish', (packet, client) => {
     if (client) {
         console.log(`Message received from ${client.id}: ${packet.payload.toString()} on topic ${packet.topic}`);
 
-        
+        saveToDatabase(client.id, packet.topic, packet.payload.toString());
     }
 });
+
+aedes.authorizeForward = (client, packet) => {
+    console.log(`Suppressing broadcast for message on topic: ${packet.topic}`);
+    return null; // Prevent message from being forwarded to any client
+};
 
 // Handle client disconnections
 aedes.on('clientDisconnect', (client) => {
     console.log(`Client disconnected: ${client?.id}`);
 });
 
-
+function saveToDatabase(clientId, topic, payload) {
+    console.log(`Saving to database: Client=${clientId}, Topic=${topic}, Payload=${payload}`);
+    // Add your database logic here
+}
