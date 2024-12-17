@@ -24,21 +24,21 @@ aedes.on('subscribe', (subscriptions, client) => {
         console.log(`Client ${client.id} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ')}`);
 
         // Send a welcome message to the subscribing client
-        const welcomeMessage = `Hello ${client.id}, you have subscribed to ${subscriptions[0]?.topic}!`;
+        const welcomeTopic = `welcome/${client.id}`;
+        const welcomeMessage = `Hello ${client.id}, welcome to the MQTT broker!`;
 
         aedes.publish(
             {
-                topic: `public/mqtt`, // Dedicated welcome topic to avoid loopback
+                topic: welcomeTopic,  // Dedicated welcome topic
                 payload: welcomeMessage,
-                qos: 1,                       // At least once delivery
-                retain: false,                // Do not retain this message
+                qos: 1,
+                retain: false,
             },
-            client, // Send only to this client
             (err) => {
                 if (err) {
                     console.error(`Failed to send welcome message to ${client.id}:`, err);
                 } else {
-                    console.log(`Welcome message sent to ${client.id} on topic welcome/${client.id}`);
+                    console.log(`Welcome message sent to ${client.id} on topic ${welcomeTopic}`);
                 }
             }
         );
@@ -54,9 +54,13 @@ aedes.on('publish', (packet, client) => {
     }
 });
 
+// Suppress client-published messages (prevent self-broadcast)
 aedes.authorizeForward = (client, packet) => {
-    console.log(`Suppressing broadcast for message on topic: ${packet.topic}`);
-    return null; // Prevent message from being forwarded to any client
+    if (client && packet && packet.topic === "public/mqtt") {
+        console.log(`Suppressing message from ${client.id} on topic ${packet.topic}`);
+        return null; // Do not forward client-published messages
+    }
+    return packet; // Forward other messages
 };
 
 // Handle client disconnections
