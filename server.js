@@ -37,24 +37,52 @@ aedes.on('publish', (packet, client) => {
             let responseMessage = "";
 
             if (payloadMessage === VALID_HOST_ID) {
+                // Handle valid host ID
                 console.log(`Valid host ID received from ${clientId}.`);
                 responseMessage = `Valid host ID received! Proceed Unlock now.`;
-            } else {
-                console.log(`Invalid host ID received from ${clientId}.`);
-                responseMessage = `Invalid host ID!`;
-            }
-
-            // Send response to the client's y-topic
-            const responseTopic = `mqtt/x/${uniqueId}`;
             
-            aedes.publish({
-                topic: responseTopic,
-                payload: responseMessage,
-                qos: 1,
-                retain: false
-            }, () => {
-                console.log(`Response sent to ${uniqueId} on topic ${responseTopic}`);
-            });
+                // Send response to the client
+                const responseTopic = `mqtt/x/${uniqueId}`;
+                aedes.publish(
+                    {
+                        topic: responseTopic,
+                        payload: responseMessage,
+                        qos: 1,
+                        retain: false,
+                    },
+                    () => {
+                        console.log(`Response sent to ${uniqueId} on topic ${responseTopic}`);
+                    }
+                );
+            } else if (payloadMessage.startsWith("unlock:")) {
+                // Handle unlock result
+                console.log(`Unlock result received from ${clientId}: ${payloadMessage}`);
+            
+                if (payloadMessage.includes("SUCCESS")) {
+                    console.log(`Client ${clientId} successfully unlocked.`);
+                } else if (payloadMessage.includes("FAILURE")) {
+                    console.error(`Client ${clientId} failed to unlock. Details: ${payloadMessage}`);
+                } else {
+                    console.warn(`Unknown unlock result received from ${clientId}: ${payloadMessage}`);
+                }
+            } else {
+                // Handle invalid host ID or unexpected payload
+                console.log(`Invalid or unexpected message received from ${clientId}: ${payloadMessage}`);
+                responseMessage = `Invalid host ID or unexpected message!`;
+            
+                const responseTopic = `mqtt/x/${uniqueId}`;
+                aedes.publish(
+                    {
+                        topic: responseTopic,
+                        payload: responseMessage,
+                        qos: 1,
+                        retain: false,
+                    },
+                    () => {
+                        console.log(`Error response sent to ${uniqueId} on topic ${responseTopic}`);
+                    }
+                );
+            }
         }
     }
 });
