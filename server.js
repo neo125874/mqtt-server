@@ -18,7 +18,9 @@ httpServer.listen(wsPort, () => {
     console.log(`MQTT server is running on ws://localhost:${wsPort}`);
 });
 
-const VALID_HOST_ID = "180321887703093";
+//const VALID_HOST_ID = "180321887703093";
+const VALID_HOST_IDS = ["180321887703093"]; // Add more IDs as needed
+
 
 // Handle incoming client messages on x-topic and send responses to y-topic
 aedes.on('publish', (packet, client) => {
@@ -36,7 +38,7 @@ aedes.on('publish', (packet, client) => {
             const payloadMessage = packet.payload.toString();
             let responseMessage = "";
 
-            if (payloadMessage === VALID_HOST_ID) {
+            if (VALID_HOST_IDS.includes(payloadMessage)) {
                 // Handle valid host ID
                 console.log(`Valid host ID received from ${clientId}.`);
                 responseMessage = `Valid host ID received! Proceed Unlock now.`;
