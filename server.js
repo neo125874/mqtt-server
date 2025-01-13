@@ -1,6 +1,7 @@
 const aedes = require('aedes')(); // Lightweight MQTT broker library
 const http = require('http'); // For WebSocket support
 const ws = require('websocket-stream'); // WebSocket stream
+const colors = require('colors');
 
 const mqttPort = 1883;  // Port for TCP MQTT
 const wsPort = 9001;    // Port for WebSocket MQTT
@@ -8,14 +9,14 @@ const wsPort = 9001;    // Port for WebSocket MQTT
 // Create MQTT server over TCP
 const tcpServer = require('net').createServer(aedes.handle);
 tcpServer.listen(mqttPort, () => {
-    console.log(`MQTT server is running on tcp://localhost:${mqttPort}`);
+    console.log(`MQTT server is running on tcp://localhost:${mqttPort}`.green);
 });
 
 // Create WebSocket server
 const httpServer = http.createServer();
 ws.createServer({ server: httpServer }, aedes.handle);
 httpServer.listen(wsPort, () => {
-    console.log(`MQTT server is running on ws://localhost:${wsPort}`);
+    console.log(`MQTT server is running on ws://localhost:${wsPort}`.blue);
 });
 
 //const VALID_HOST_ID = "180321887703093";
@@ -25,7 +26,7 @@ const VALID_HOST_IDS = ["180321887703093"]; // Add more IDs as needed
 // Handle incoming client messages on x-topic and send responses to y-topic
 aedes.on('publish', (packet, client) => {
     if (client) {
-        console.log(`Message received from ${client.id}: ${packet.payload.toString()} on topic ${packet.topic}`);
+        console.log(`Message received from ${client.id.yellow}: ${packet.payload.toString().white} on topic ${packet.topic.magenta}`);
 
         // Extract client ID from the topic
         const clientId = client.id;
@@ -33,14 +34,14 @@ aedes.on('publish', (packet, client) => {
 
         // Check if the topic is an input topic (mqtt/x/<client.id>)
         if (packet.topic === `mqtt/y/${uniqueId}`) {
-            console.log(`Processing message from ${clientId}...`);
+            console.log(`Processing message from ${client.id.yellow}...`.green);
 
             const payloadMessage = packet.payload.toString();
             let responseMessage = "";
 
             if (VALID_HOST_IDS.includes(payloadMessage)) {
                 // Handle valid host ID
-                console.log(`Valid host ID received from ${clientId}.`);
+                console.log(`Valid host ID received from ${client.id.yellow}.`.green);
                 responseMessage = `Valid host ID received! Proceed Unlock now.`;
             
                 // Send response to the client
@@ -53,23 +54,23 @@ aedes.on('publish', (packet, client) => {
                         retain: false,
                     },
                     () => {
-                        console.log(`Response sent to ${uniqueId} on topic ${responseTopic}`);
+                        console.log(`Response sent to ${client.id.yellow} on topic mqtt/x/${client.id}`.blue);
                     }
                 );
             } else if (payloadMessage.startsWith("unlock:")) {
                 // Handle unlock result
-                console.log(`Unlock result received from ${clientId}: ${payloadMessage}`);
+                console.log(`Unlock result received from ${clientId.yellow}: ${payloadMessage.white}`.magenta);
             
                 if (payloadMessage.includes("SUCCESS")) {
-                    console.log(`Client ${clientId} successfully unlocked.`);
+                    console.log(`Client ${clientId.yellow} successfully unlocked.`.green);
                 } else if (payloadMessage.includes("FAILURE")) {
-                    console.error(`Client ${clientId} failed to unlock. Details: ${payloadMessage}`);
+                    console.log(`Client ${clientId.yellow} failed to unlock. Details: ${payloadMessage.white}`.red);
                 } else {
-                    console.warn(`Unknown unlock result received from ${clientId}: ${payloadMessage}`);
+                    console.log(`Unknown unlock result received from ${clientId.yellow}: ${payloadMessage.white}`.magenta);
                 }
             } else {
                 // Handle invalid host ID or unexpected payload
-                console.log(`Invalid or unexpected message received from ${clientId}: ${payloadMessage}`);
+                console.log(`Invalid or unexpected message received from ${client.id.yellow}: ${packet.payload.toString().white}`.red);
                 responseMessage = `Invalid host ID or unexpected message!`;
             
                 const responseTopic = `mqtt/x/${uniqueId}`;
@@ -81,7 +82,7 @@ aedes.on('publish', (packet, client) => {
                         retain: false,
                     },
                     () => {
-                        console.log(`Error response sent to ${uniqueId} on topic ${responseTopic}`);
+                        console.log(`Error response sent to ${uniqueId.yellow} on topic ${responseTopic.cyan}`.red);
                     }
                 );
             }
@@ -91,11 +92,11 @@ aedes.on('publish', (packet, client) => {
 
 // Handle client subscriptions
 aedes.on('subscribe', (subscriptions, client) => {
-    console.log(`Client ${client.id} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ')}`);
+    console.log(`Client ${client.id.yellow} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ').cyan}`.green);
 });
 
 // Handle client disconnections
 aedes.on('clientDisconnect', (client) => {
-    console.log(`Client disconnected: ${client?.id}`);
+    console.log(`Client disconnected: ${client?.id.yellow}`.red);
 });
 

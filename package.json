@@ -19,6 +19,8 @@
   "homepage": "https://github.com/neo125874/mqtt-server#readme",
   "dependencies": {
     "aedes": "^0.51.3",
+    "chalk": "^5.4.1",
+    "colors": "^1.4.0",
     "websocket-stream": "^5.5.2"
   }
 }
