@@ -14,14 +14,14 @@ function generateHMAC(key, message) {
 // Create MQTT server over TCP
 const tcpServer = require('net').createServer(aedes.handle);
 tcpServer.listen(mqttPort, () => {
-    console.log(`MQTT server is running on tcp://localhost:${mqttPort}`.green);
+    console.log(`MQTT server is running on tcp://localhost:${mqttPort}`);
 });
 
 // Create WebSocket server
 const httpServer = http.createServer();
 ws.createServer({ server: httpServer }, aedes.handle);
 httpServer.listen(wsPort, () => {
-    console.log(`MQTT server is running on ws://localhost:${wsPort}`.blue);
+    console.log(`MQTT server is running on ws://localhost:${wsPort}`);
 });
 
 //const VALID_HOST_ID = "180321887703093";
@@ -34,7 +34,7 @@ const VALID_HOST_IDS = [
 // Handle incoming client messages on x-topic and send responses to y-topic
 aedes.on('publish', (packet, client) => {
     if (client) {
-        console.log(`Message received from ${client.id.yellow}: ${packet.payload.toString().white} on topic ${packet.topic.magenta}`);
+        console.log(`Message received from ${client.id.yellow}: ${packet.payload.toString().green} on topic ${packet.topic.magenta}`);
 
         // Extract client ID from the topic
         const clientId = client.id;
@@ -42,14 +42,14 @@ aedes.on('publish', (packet, client) => {
 
         // Check if the topic is an input topic (mqtt/x/<client.id>)
         if (packet.topic === `mqtt/y/${uniqueId}`) {
-            console.log(`Processing message from ${client.id.yellow}...`.green);
+            console.log(`Processing message from ${client.id.yellow}...`);
 
             const payloadMessage = packet.payload.toString();
             let responseMessage = "";
 
             if (VALID_HOST_IDS.includes(payloadMessage)) {
                 // Handle valid host ID
-                console.log(`Valid host ID received from ${client.id.yellow}.`.green);
+                console.log(`Valid host ID received from ${client.id.yellow}.`);
                 responseMessage = `Valid host ID received! Proceed Unlock now.`;
             
                 const hmacKey = uniqueId; 
@@ -71,12 +71,12 @@ aedes.on('publish', (packet, client) => {
                         retain: false,
                     },
                     () => {
-                        console.log(`Response sent to ${client.id.yellow} on topic mqtt/x/${client.id}`.blue);
+                        console.log(`Response sent to ${client.id.yellow} on topic mqtt/x/${client.id}`);
                     }
                 );
             } else if (payloadMessage.startsWith("unlock:")) {
                 // Handle unlock result
-                console.log(`Unlock result received from ${clientId.yellow}: ${payloadMessage.white}`.magenta);
+                console.log(`Unlock result received from ${clientId.yellow}: ${payloadMessage.red}`);
             
                 if (payloadMessage.includes("SUCCESS")) {
                     console.log(`Client ${clientId.yellow} successfully unlocked.`.green);
@@ -87,7 +87,7 @@ aedes.on('publish', (packet, client) => {
                 }
             } else {
                 // Handle invalid host ID or unexpected payload
-                console.log(`Invalid or unexpected message received from ${client.id.yellow}: ${packet.payload.toString().white}`.red);
+                console.log(`Invalid or unexpected message received from ${client.id.yellow}: ${packet.payload.toString().white}`);
                 responseMessage = `Invalid host ID or unexpected message!`;
             
                 const responseTopic = `mqtt/x/${uniqueId}`;
@@ -99,7 +99,7 @@ aedes.on('publish', (packet, client) => {
                         retain: false,
                     },
                     () => {
-                        console.log(`Error response sent to ${uniqueId.yellow} on topic ${responseTopic.cyan}`.red);
+                        console.log(`Error response sent to ${uniqueId.yellow} on topic ${responseTopic.cyan}`);
                     }
                 );
             }
@@ -109,11 +109,11 @@ aedes.on('publish', (packet, client) => {
 
 // Handle client subscriptions
 aedes.on('subscribe', (subscriptions, client) => {
-    console.log(`Client ${client.id.yellow} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ').cyan}`.green);
+    console.log(`Client ${client.id.yellow} subscribed to: ${subscriptions.map(sub => sub.topic).join(', ').cyan}`);
 });
 
 // Handle client disconnections
 aedes.on('clientDisconnect', (client) => {
-    console.log(`Client disconnected: ${client?.id.yellow}`.red);
+    console.log(`Client disconnected: ${client?.id.yellow}`);
 });
 
