@@ -53,7 +53,7 @@ aedes.on('publish', (packet, client) => {
                 responseMessage = `Valid host ID received! Proceed Unlock now.`;
             
                 const hmacKey = uniqueId; 
-                const hmacMessage = hostId; 
+                const hmacMessage = payloadMessage; 
                 const hmac = generateHMAC(hmacKey, hmacMessage);
 
                 const jsonPayload = JSON.stringify({
