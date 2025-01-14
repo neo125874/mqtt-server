@@ -2,9 +2,14 @@ const aedes = require('aedes')(); // Lightweight MQTT broker library
 const http = require('http'); // For WebSocket support
 const ws = require('websocket-stream'); // WebSocket stream
 const colors = require('colors');
+const crypto = require('crypto');
 
 const mqttPort = 1883;  // Port for TCP MQTT
 const wsPort = 9001;    // Port for WebSocket MQTT
+
+function generateHMAC(key, message) {
+    return crypto.createHmac('sha256', key).update(message).digest('hex');
+}
 
 // Create MQTT server over TCP
 const tcpServer = require('net').createServer(aedes.handle);
@@ -20,8 +25,11 @@ httpServer.listen(wsPort, () => {
 });
 
 //const VALID_HOST_ID = "180321887703093";
-const VALID_HOST_IDS = ["180321887703093"]; // Add more IDs as needed
+const VALID_HOST_IDS = [
+    "180321887703093", 
+    "191262627700992"
 
+]; // Add more IDs as needed
 
 // Handle incoming client messages on x-topic and send responses to y-topic
 aedes.on('publish', (packet, client) => {
@@ -44,12 +52,21 @@ aedes.on('publish', (packet, client) => {
                 console.log(`Valid host ID received from ${client.id.yellow}.`.green);
                 responseMessage = `Valid host ID received! Proceed Unlock now.`;
             
+                const hmacKey = uniqueId; 
+                const hmacMessage = hostId; 
+                const hmac = generateHMAC(hmacKey, hmacMessage);
+
+                const jsonPayload = JSON.stringify({
+                    message: responseMessage, // Original message
+                    hmac: hmac               // Generated HMAC
+                });
+
                 // Send response to the client
                 const responseTopic = `mqtt/x/${uniqueId}`;
                 aedes.publish(
                     {
                         topic: responseTopic,
-                        payload: responseMessage,
+                        payload: jsonPayload,
                         qos: 1,
                         retain: false,
                     },
