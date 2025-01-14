@@ -21,7 +21,7 @@ tcpServer.listen(mqttPort, () => {
 const httpServer = http.createServer();
 ws.createServer({ server: httpServer }, aedes.handle);
 httpServer.listen(wsPort, () => {
-    console.log(`MQTT server is running on ws://localhost:${wsPort}`);
+    console.log(`MQTT server is running on ws://localhost:${wsPort}\n`);
 });
 
 //const VALID_HOST_ID = "180321887703093";
@@ -34,7 +34,7 @@ const VALID_HOST_IDS = [
 // Handle incoming client messages on x-topic and send responses to y-topic
 aedes.on('publish', (packet, client) => {
     if (client) {
-        console.log(`Message received from ${client.id.yellow}: ${packet.payload.toString().green} on topic ${packet.topic.magenta}`);
+        console.log(`Message received from ${client.id.yellow}: ${packet.payload.toString().blue} on topic ${packet.topic.magenta}`);
 
         // Extract client ID from the topic
         const clientId = client.id;
@@ -81,9 +81,9 @@ aedes.on('publish', (packet, client) => {
                 if (payloadMessage.includes("SUCCESS")) {
                     console.log(`Client ${clientId.yellow} successfully unlocked.`.green);
                 } else if (payloadMessage.includes("FAILURE")) {
-                    console.log(`Client ${clientId.yellow} failed to unlock. Details: ${payloadMessage.white}`.red);
+                    console.log(`Client ${clientId.yellow} failed to unlock. Details: ${payloadMessage.red}`);
                 } else {
-                    console.log(`Unknown unlock result received from ${clientId.yellow}: ${payloadMessage.white}`.magenta);
+                    console.log(`Unknown unlock result received from ${clientId.yellow}: ${payloadMessage.magenta}`);
                 }
             } else {
                 // Handle invalid host ID or unexpected payload
