@@ -49,7 +49,7 @@ aedes.on('publish', (packet, client) => {
 
             if (VALID_HOST_IDS.includes(payloadMessage)) {
                 // Handle valid host ID
-                console.log(`Valid host ID received from ${client.id.yellow}.`);
+                console.log(`Valid host ID received from ${client.id.yellow}.`.green);
                 responseMessage = `Valid host ID received! Proceed Unlock now.`;
             
                 const hmacMessage = uniqueId; 
@@ -76,7 +76,7 @@ aedes.on('publish', (packet, client) => {
                 );
             } else if (payloadMessage.startsWith("unlock:")) {
                 // Handle unlock result
-                console.log(`Unlock result received from ${clientId.yellow}: ${payloadMessage.red}`);
+                console.log(`Unlock result received from ${clientId.yellow}: ${payloadMessage.bgGray}`);
             
                 if (payloadMessage.includes("SUCCESS")) {
                     console.log(`Client ${clientId.yellow} successfully unlocked.`.green);
