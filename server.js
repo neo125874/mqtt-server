@@ -3,6 +3,7 @@ const http = require('http'); // For WebSocket support
 const ws = require('websocket-stream'); // WebSocket stream
 const colors = require('colors');
 const crypto = require('crypto');
+const axios = require('axios');
 
 const mqttPort = 1883;  // Port for TCP MQTT
 const wsPort = 9001;    // Port for WebSocket MQTT
@@ -11,10 +12,29 @@ function generateHMAC(key, message) {
     return crypto.createHmac('sha256', key).update(message).digest('hex');
 }
 
+// Function to fetch public IP
+async function getPublicIP() {
+    try {
+        const response = await axios.get('https://api.ipify.org?format=json');
+        return response.data.ip;
+    } catch (error) {
+        console.error('Error fetching public IP:', error.message);
+        return 'Unknown IP';
+    }
+}
+
 // Create MQTT server over TCP
 const tcpServer = require('net').createServer(aedes.handle);
-tcpServer.listen(mqttPort, () => {
+tcpServer.listen(mqttPort, async () => {
     console.log(`MQTT server is running on tcp://localhost:${mqttPort}`);
+    
+    // Fetch and log the public IP when the server starts
+    try {
+        const publicIP = await getPublicIP();
+        console.log(`Public IP Address: ${publicIP}`.bgGrey);
+    } catch (error) {
+        console.error('Error fetching public IP:', error.message);
+    }
 });
 
 // Create WebSocket server
@@ -76,7 +96,7 @@ aedes.on('publish', (packet, client) => {
                 );
             } else if (payloadMessage.startsWith("unlock:")) {
                 // Handle unlock result
-                console.log(`Unlock result received from ${clientId.yellow}: ${payloadMessage.bgGray}`);
+                console.log(`Unlock result received from ${clientId.yellow}: ${payloadMessage.bgGrey}`);
             
                 if (payloadMessage.includes("SUCCESS")) {
                     console.log(`Client ${clientId.yellow} successfully unlocked.`.green);
@@ -87,7 +107,7 @@ aedes.on('publish', (packet, client) => {
                 }
             } else {
                 // Handle invalid host ID or unexpected payload
-                console.log(`Invalid or unexpected message received from ${client.id.yellow}: ${packet.payload.toString().white}`);
+                console.log(`Invalid or unexpected message received from ${client.id.yellow}: ${packet.payload.toString().white}`.red);
                 responseMessage = `Invalid host ID or unexpected message!`;
             
                 const responseTopic = `mqtt/x/${uniqueId}`;
