@@ -102,6 +102,8 @@ aedes.on('publish', (packet, client) => {
                     console.log(`Client ${clientId.yellow} successfully unlocked.`.green);
                 } else if (payloadMessage.includes("FAILURE")) {
                     console.log(`Client ${clientId.yellow} failed to unlock. Details: ${payloadMessage.red}`);
+                }else if (payloadMessage.includes("NOT LOCKED")) {
+                    console.log(`Client ${clientId.yellow} reported that the drive was not locked.`.cyan);
                 } else {
                     console.log(`Unknown unlock result received from ${clientId.yellow}: ${payloadMessage.magenta}`);
                 }
