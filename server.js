@@ -101,7 +101,13 @@ aedes.on('publish', (packet, client) => {
                 if (payloadMessage.includes("SUCCESS")) {
                     console.log(`Client ${clientId.yellow} successfully unlocked.`.green);
                 } else if (payloadMessage.includes("FAILURE")) {
-                    console.log(`Client ${clientId.yellow} failed to unlock. Details: ${payloadMessage.red}`);
+                    if (payloadMessage.includes("terminated by signal")) {
+                        console.log(`Client ${clientId.yellow} failed to unlock due to signal termination. Details: ${payloadMessage.red}`);
+                    } else if (payloadMessage.includes("system command failed")) {
+                        console.log(`Client ${clientId.yellow} failed to execute the system command. Details: ${payloadMessage.red}`);
+                    } else {
+                        console.log(`Client ${clientId.yellow} failed to unlock. Details: ${payloadMessage.red}`);
+                    }
                 }else if (payloadMessage.includes("NOT LOCKED")) {
                     console.log(`Client ${clientId.yellow} reported that the drive was not locked.`.cyan);
                 } else {
