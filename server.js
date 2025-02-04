@@ -118,16 +118,20 @@ aedes.on('publish', (packet, client) => {
                 console.log(`Invalid or unexpected message received from ${client.id.yellow}: ${packet.payload.toString().white}`.red);
                 responseMessage = `Invalid host ID or unexpected message!`;
             
+                const jsonPayload = JSON.stringify({
+                    message: responseMessage, // Original message
+                });
+
                 const responseTopic = `mqtt/x/${uniqueId}`;
                 aedes.publish(
                     {
                         topic: responseTopic,
-                        payload: responseMessage,
+                        payload: jsonPayload,
                         qos: 1,
                         retain: false,
                     },
                     () => {
-                        console.log(`Error response sent to ${uniqueId.yellow} on topic ${responseTopic.cyan}`);
+                        console.log(`Error response sent to ${client.id.yellow} on topic ${responseTopic.cyan}`);
                     }
                 );
             }
