@@ -120,6 +120,7 @@ aedes.on('publish', (packet, client) => {
             
                 const jsonPayload = JSON.stringify({
                     message: responseMessage, // Original message
+                    hmac: "" 
                 });
 
                 const responseTopic = `mqtt/x/${uniqueId}`;
